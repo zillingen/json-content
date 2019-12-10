@@ -1,0 +1,6 @@
+vendor/
+var/
+log/
+cache/
+dist/
+node_modules/
