@@ -1,0 +1,10 @@
+# Base frontend path
+path: /api/content
+
+# Authentication
+# enabled - enable or disable authentication
+# access_token - if true, extension will check X-Auth-Token header
+auth:
+  enabled: true
+  access_token: ahn4uPhie1xoph8Ero3Shutaigh8Eoh0
+
