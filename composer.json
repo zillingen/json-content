@@ -2,7 +2,7 @@
     "name": "zillingen/json-content",
     "description": "The Bolt CMS extension which allow to create and edit records using HTTP queries",
     "type": "bolt-extension",
-    "keywords": ["json", "boltcms"],
+    "keywords": ["json", "content", "rest", "api"],
     "require": {
         "bolt/bolt": "^3.6"
     },
