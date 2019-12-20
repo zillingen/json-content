@@ -1,10 +1,11 @@
 {
     "name": "zillingen/json-content",
-    "description": "The Bolt CMS extension which allow to create and edit records using HTTP queries",
+    "description": "The Bolt CMS extension allow create and edit records using REST API",
     "type": "bolt-extension",
     "keywords": ["json", "content", "rest", "api"],
     "require": {
-        "bolt/bolt": "^3.6"
+        "bolt/bolt": "^3.6",
+        "ext-json": "*"
     },
     "license": "MIT",
     "authors": [

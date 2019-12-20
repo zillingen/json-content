@@ -4,13 +4,11 @@
 namespace Bolt\Extension\Zillingen\JsonContent\Controller;
 
 use Bolt\Controller\Base;
-use Bolt\Storage\Collection\Taxonomy;
 use Bolt\Storage;
 use Silex\ControllerCollection;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ContentController extends Base
@@ -24,7 +22,7 @@ class ContentController extends Base
     }
 
     /**
-     * Get extensions config
+     * Get extension config
      * @return array:
      */
     public function getConfig()
@@ -32,6 +30,10 @@ class ContentController extends Base
         return $this->config;
     }
 
+    /**
+     * {@inheritDoc}
+     * @param ControllerCollection $c
+     */
     protected function addRoutes(ControllerCollection $c)
     {
         $c
@@ -52,58 +54,107 @@ class ContentController extends Base
         ;
     }
 
-    public function get(Request $request, string $contentType, int $id) {
+    /**
+     * Get record data
+     * @param string $contentType Content type
+     * @param int $id Record id
+     * @return JsonResponse
+     */
+    public function get(string $contentType, int $id) {
         $record = $this->app['storage']->find($contentType, $id);
+        $taxonomy = $this->getRepository(Storage\Entity\Taxonomy::class)->findBy(['content_id' => $id]);
+        $recordAsArray = $record->toArray();
+        $recordAsArray['taxonomy'] = $taxonomy;
 
-        return new JsonResponse([
-            'record' => $record,
-            'contentType' => $contentType,
-            'id' => $id,
-            'taxonomy' => $record->getTaxonomy()->serialize(),
-        ]);
+        return new JsonResponse($recordAsArray);
     }
 
+    /**
+     * Create new record
+     * @param Request $request
+     * @param string $contentType Content type
+     * @return JsonResponse
+     */
     public function create(Request $request, string $contentType)
     {
-        $repo = $this->getRepository($contentType);
         $data = json_decode($request->getContent(), true);
+        $repo = $this->getRepository($contentType);
         $record = $repo->create($data, $repo->getClassMetadata());
 
         $repo->save($record);
 
-        // TODO: move to function handleTaxonomy(array $taxonomy, $record)
         if (isset($data['taxonomy'])) {
-            $taxonomyCollection = new Storage\Collection\Taxonomy();
-
-            foreach ($data['taxonomy'] as $taxonomyType => $items) {
-                foreach ($items as $item) {
-                    $item['taxonomytype'] = $taxonomyType;
-                    $item['content_id'] = $record->getId();
-                    $item['contenttype'] = $record->getContentType();
-                    $tax = new Storage\Entity\Taxonomy($item);
-                    $repo = $this->getRepository(Storage\Entity\Taxonomy::class);
-                    $repo->save($tax);
-                }
-            }
-
-            $record->setTaxonomy($taxonomyCollection);
+           $this->handleTaxonomy($data['taxonomy'], $record);
         }
+
 
         return new JsonResponse([
             "record" => [
                 "id" => $record->getId(),
                 "link" => $record->link(UrlGeneratorInterface::ABSOLUTE_URL),
             ]
-        ]);
-    }
-
-    public function patch(Request $request)
-    {
-
+        ],
+        Response::HTTP_CREATED
+        );
     }
 
     /**
-     * Middleware checks auth token in the X-Auth-Token HTTP header
+     * Handle and save taxonomy data
+     * @param array $taxonomy Taxonomy data
+     * @param Storage\Entity\Entity $record Record instance
+     */
+    protected function handleTaxonomy(array $taxonomy, Storage\Entity\Entity $record)
+    {
+        $taxonomyCollection = new Storage\Collection\Taxonomy();
+
+        foreach ($taxonomy as $taxonomyType => $items) {
+            foreach ($items as $item) {
+                $item['taxonomytype'] = $taxonomyType;
+                $item['content_id'] = $record->getId();
+                $item['contenttype'] = $record->getContentType();
+                $tax = new Storage\Entity\Taxonomy($item);
+                $repo = $this->getRepository(Storage\Entity\Taxonomy::class);
+                $repo->insert($tax);
+            }
+        }
+
+        $record->setTaxonomy($taxonomyCollection);
+    }
+
+    /**
+     * Handle PATCH request
+     * @param Request $request
+     * @param string $contentType Content type
+     * @param int $id Record id
+     * @return JsonResponse|Response
+     */
+    public function patch(Request $request, string $contentType, int $id)
+    {
+        $data = json_decode($request->getContent(), true);
+        $repo = $this->getRepository($contentType);
+        $record = $repo->find($id);
+
+        unset($data['id']);
+        unset($data['taxonomy']);
+
+        if (!$record) {
+            return new Response(Response::HTTP_NOT_FOUND);
+        }
+
+        foreach ($data as $key => $value) {
+            $record->set($key, $value);
+        }
+
+        $repo->update($record, ['id']);
+        $updatedRecord = $repo->find($id);
+
+        return new JsonResponse([
+            'record' => $updatedRecord,
+        ]);
+    }
+
+    /**
+     * Middleware to authenticate request with X-Auth-Token HTTP header
      * @param Request $request
      * @return Response|void
      */
