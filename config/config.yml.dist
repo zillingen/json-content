@@ -6,5 +6,5 @@ path: /api/content
 # access_token - if true, extension will check X-Auth-Token header
 auth:
   enabled: true
-  access_token: ahn4uPhie1xoph8Ero3Shutaigh8Eoh0
+  access_token: __TOKEN__
 

@@ -3,8 +3,6 @@
 namespace Bolt\Extension\Zillingen\JsonContent;
 
 use Bolt\Extension\SimpleExtension;
-use Silex\ControllerCollection;
-use Symfony\Component\HttpFoundation\Response;
 
 class JsonContentExtension extends SimpleExtension
 {
@@ -17,11 +15,15 @@ class JsonContentExtension extends SimpleExtension
             'path' => '/api/content',
             'auth' => [
                 'enabled' => true,
-                'access_token' => 'ahn4uPhie1xoph8Ero3Shutaigh8Eoh0'
+                'access_token' => '__TOKEN__'
             ]
         ];
     }
 
+    /**
+     * {@inheritDoc}
+     * @return array
+     */
     protected function registerFrontendControllers()
     {
         $config = $this->getConfig();

@@ -16,6 +16,10 @@ class ContentController extends Base
     /** @var array $config */
     protected $config;
 
+    /**
+     * ContentController constructor.
+     * @param array $config Extension's config
+     */
     public function __construct(array $config)
     {
         $this->config = $config;
@@ -23,7 +27,7 @@ class ContentController extends Base
 
     /**
      * Get extension config
-     * @return array:
+     * @return array
      */
     public function getConfig()
     {
@@ -55,7 +59,7 @@ class ContentController extends Base
     }
 
     /**
-     * Get record data
+     * Get record
      * @param string $contentType Content type
      * @param int $id Record id
      * @return JsonResponse
